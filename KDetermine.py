@@ -23,7 +23,7 @@ import scipy as sci
 import pandas as pan
 import os
 from collections import OrderedDict
-get_ipython().magic('matplotlib inline')
+#get_ipython().magic('matplotlib inline')
 
 
 # In[7]:
@@ -247,14 +247,15 @@ def LayerDipole(dumpFile,frames,atomNumber,atomPlate,UsedFrame,K,E,plotBool):
 # In[ ]:
 
 # values of k
-k=[600,800,1000,1200,1400,1600]
-E=[1,2,3,4,5,6,7,8]
+k=[200,250,300,350,400,450,500,550]
+E=[0.5,1,1.5,2]
 frameUsed=99
-atomNumber=3600
+atomNumber=4800
 atomPlate=0
 frames=100
 pathFolder="../Susceptiblity_K_determine/"
-plot=True
+slabName="PtSlab111Zhou2004Z_6"
+plot=False
 
 
 ke=[[kfile,Efile] for kfile in k for Efile in E]
@@ -262,8 +263,8 @@ dipoleMoment=[]
 valuesK=[]
 valuesE=[]
 for fileTag in ke:
-    
-    filename=("PtSlab111Z_6K_"+str(fileTag[0])+"E_"+str(fileTag[1])+".dump")
+    print("[%d,%f]"%(fileTag[0],fileTag[1]))
+    filename=(slabName+"K_"+str(fileTag[0])+"E_"+str(fileTag[1])+".dump")
     dipoleMoment.append(LayerDipole(pathFolder+filename,frames,atomNumber,atomPlate,frameUsed,fileTag[0],                                    fileTag[1]/float(10),plot))
     valuesK.append(fileTag[0])
     valuesE.append(fileTag[1]/float(10))
@@ -271,15 +272,15 @@ for fileTag in ke:
 dipoleDict=OrderedDict([("K",valuesK),("E",valuesE),("Dipole",dipoleMoment)])
 dipoleFrame=pan.DataFrame(dipoleDict)
 
-
 # In[88]:
 
-dipoleFrame["Dipole"]=dipoleFrame["Dipole"]*1.6e-19*1e-10
-dipoleFrame
+dipoleFrame["DipoleCm"]=dipoleFrame["Dipole"]*1.6e-19*1e-10
 
+
+dipoleFrame.to_csv(pathFolder+slabName+".csv", sep='\t')
 
 # In[89]:
-
+print("linear plot of Pz Vrs E")
 from scipy import stats
 newFrame=dipoleFrame[num.logical_and(dipoleFrame.Dipole!=99999,dipoleFrame.E<=0.3)]
 slope=[]
@@ -287,11 +288,11 @@ intercept=[]
 error=[]
 for kval in k:
     entries=newFrame.K==kval
-    s,i,p_val,r_val,std_err=stats.linregress(newFrame[entries].E,newFrame[entries].Dipole)
+    s,i,p_val,r_val,std_err=stats.linregress(newFrame[entries].E,newFrame[entries].DipoleCm)
     slope.append(s)
     intercept.append(i)
     error.append(std_err)
-    lab.plot(newFrame[entries].E,newFrame[entries].Dipole,'bo')
+    lab.plot(newFrame[entries].E,newFrame[entries].DipoleCm,'bo')
     ee=num.linspace(0,max(newFrame.E),1000)
     lab.plot(ee,s*ee+i,"r")
     lab.title("K="+str(kval))
@@ -306,35 +307,35 @@ dataSloInt=OrderedDict([("K",k),("slope",slope),("intercept",intercept),("error"
 # In[91]:
 
 dataFrameSIE=pan.DataFrame(dataSloInt)
-dataFrameSIE
+
+dataFrameSIE.to_csv(pathFolder+slabName+"SIE.csv", sep='\t')
 
 
 # In[92]:
 
-dataFrameSIE["Slope800"]=slope
-dataFrameSIE["intercept800"]=intercept
-dataFrameSIE["error800"]=error
+#dataFrameSIE["Slope800"]=slope
+#dataFrameSIE["intercept800"]=intercept
+#dataFrameSIE["error800"]=error
 
 
 # In[93]:
-
+print("slope vrs K")
 from scipy.interpolate import interp1d
 lab.plot(dataFrameSIE.K,dataFrameSIE.slope,"o")
-lab.plot(dataFrameSIE.K,dataFrameSIE.Slope800,'^')
+#lab.plot(dataFrameSIE.K,dataFrameSIE.Slope800,'^')
 fitFx=interp1d(dataFrameSIE.K,dataFrameSIE.slope,kind="cubic")
-fitFx800=interp1d(dataFrameSIE.K,dataFrameSIE.Slope800,kind="cubic")
+#fitFx800=interp1d(dataFrameSIE.K,dataFrameSIE.Slope800,kind="cubic")
 kk=num.linspace(min(dataFrameSIE.K),max(dataFrameSIE.K),1000)
 lab.plot(kk,fitFx(kk),"r",label="600")
-lab.plot(kk,fitFx800(kk),"g",label='800')
+#lab.plot(kk,fitFx800(kk),"g",label='800')
 lab.xlabel("K")
 lab.legend()
 lab.ylabel("Slope")
+lab.savefig(pathFolder+slabName+".eps")
 lab.show()
 
 
-# In[56]:
-
-dataFrameSIE
+# In[56]
 
 
 # In[ ]:

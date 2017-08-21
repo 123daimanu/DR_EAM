@@ -1,3 +1,4 @@
+#edits xyz file
 #!/usr/bin/python
 import numpy as num
 from sys import argv

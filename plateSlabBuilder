@@ -133,7 +133,7 @@ def make_lattice(lattice, latticeConstant, rotMat, minVec, repeats, vacuum):
     if (vacuum.lower() == "true"):
         # Multiplying the z-dimenion by 3 so the resulting box
         # contains 2/3 vacuum and 1/3 solid
-        Hmat = [[boxCorner[0],0,0], [0,boxCorner[1],0], [0,0,boxCorner[2]*10.0]]
+        Hmat = [[boxCorner[0],0,0], [0,boxCorner[1],0], [0,0,boxCorner[2]*100.0]]
     else:
         Hmat = [[boxCorner[0],0,0], [0,boxCorner[1],0], [0,0,boxCorner[2]]]
 
@@ -151,19 +151,14 @@ def write_xyz_file(outputFileName, coords, elementType):
     outputFile.close()
     print "Generated XYZ file: " + outputFileName
 
-def plate_coordinates(Hmat,Nx,Ny,sep):
-        x_low=-abs(Hmat[0][0])/float(2)
-        y_low=-abs(Hmat[1][1])/float(2)
-
-        z1=-sep/float(2)
-        z2=sep/float(2)
-        x_sep=abs(Hmat[0][0])
-        y_sep=abs(Hmat[1][1])
-        spacingX=(abs(x_sep)/float(Nx))
-        spacingY=(abs(y_sep)/float(Ny))
-
-        x_int=x_low+spacingX/float(2)
-        y_int=y_low+spacingY/float(2)
+def plate_coordinates(Hmat,Nx,Ny):
+        x_int=-abs(Hmat[0][0])/float(2*100)
+        y_int=-abs(Hmat[1][1])/float(2*100)
+        z_int=-abs(Hmat[2][2])/float(2*100)
+        z1=z_int-5
+        z2=abs(Hmat[2][2]/float(2*20))+5
+        spacingX=(Hmat[0][0]/float(Nx))
+        spacingY=(Hmat[1][1]/float(Ny))
         pCoordX=np.zeros(int(Nx))
         pCoordY=np.zeros(int(Ny))
         
@@ -174,13 +169,13 @@ def plate_coordinates(Hmat,Nx,Ny,sep):
                 
         return pCoordX,pCoordY,z1,z2
     
-def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile,plates):
+def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
     outputFile = open(outputFileName, 'w')
     outputFile.write("<OpenMD version=2>\n")
     outputFile.write("  <MetaData> \n\n")
-    if (plates=="true"):
+    if(plateFile=='true'):
         outputFile.write("#include \"%s\"\n"%plateFile)
-
+    
     outputFile.write("molecule{ \n")
     outputFile.write("  name = \"" + elementType + "\";\n\n")
     outputFile.write("  atom[0]{\n")
@@ -195,7 +190,7 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile,plates):
     outputFile.write("  nMol = " + str(len(coords)) + ";\n")
     outputFile.write("}\n\n")
 
-    if(plates=="true"):
+    if(plateFile=='true'):
         outputFile.write("component{\n")
         outputFile.write("  type =\"%s\";\n"%(plateFile[:-4]))
         outputFile.write("  nMol = 1; \n")
@@ -257,8 +252,8 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile,plates):
     for i in range(len(coords)):
         outputFile.write("\t" + str(i) + "\t%s\t%f\t%f\t%f\t%s\t%s\t%s\n" %
                          ("pv", coords[i][0], coords[i][1], coords[i][2],"0.0", "0.0", "0.0"))
-
-    if (plates=="true"):
+    
+    if(plateFile=='true'):
         outputFile.write("\t%d pvqj 0 0 0 0 0 0 1 0 0 0 0 0 0 \n"%(i+1))
 
     outputFile.write("    </StuntDoubles> \n")
@@ -273,10 +268,10 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile,plates):
     outputFile.close()
     print "Generated OpenMD file: " + outputFileName
 
-def write_plate_file(Nx,Ny,pCoordX,pCoordY,z1,z2,plateType):
-	pFile=open(plateType,"w")
+def write_plate_file(Nx,Ny,pCoordX,pCoordY,z1,z2,name,plateType):
+	pFile=open(name,"w")
 	pFile.write("molecule{\n")
-        pFile.write("name=\"%s\";\n"%(plateType[:-4]))
+        pFile.write("name=\"%s\";\n"%(plateType[:,-4]))
 	pos=0
 	for x in range(int(Nx)):
 		for y in range(int(Ny)):
@@ -298,8 +293,7 @@ def main(argv):
     parser = argparse.ArgumentParser(
         description='OpenMD cubic lattice slab builder\nBuilds a slab of a cubic material (SC, FCC, or BCC) with a particular cut (hkl) facing the z-axis of the box.',
         formatter_class=RawDescriptionHelpFormatter,
-        epilog="Example: plateCubeBuilder -l fcc -c 4.08 -f 5 5 7 -r 10 10 8 -e Au -v true -ps 10 -nx 100 -ny 100 -po plates.omd  -o 557Slab.omd -x 557Slab.xyz")
-    
+        epilog="Example: plateCubeBuilder -l fcc -c 4.08 -f 5 5 7 -r 10 10 8 -e Au -v true -nx 100 -ny 100 -po plates.omd  -o 557Slab.omd -x 557Slab.xyz")
     parser.add_argument("-l","--lattice=", action="store",
                         choices=('sc','fcc','bcc'), dest="lattice", help="One of: sc, fcc, or bcc")
     parser.add_argument("-c","--latticeConstant=", action="store", type=float,
@@ -314,16 +308,10 @@ def main(argv):
                         dest="elementType",help=" the element composing the lattice")
     parser.add_argument("-v","--vacuum=",action="store",
                         choices=('true','false'),dest="vacuum", default='true', help="true/false (Should the output file have vacuum in the z-dimension?)")
-   
-    
-    
-    parser.add_argument("-p","--plates=",action="store",choices=("true","false"),dest="plates",default="false",help="true/false (Should the ouptput file have capcacitor plates in z-dimension)")
     parser.add_argument("-nx","--Nx",action="store",dest="Nx",help="number of points in x")
     parser.add_argument("-ny","--Ny",action="store",dest="Ny",help="number of points in y")
     parser.add_argument("-po","--plate-file",action="store",dest="plateFile",help="name of .omd file conting the plates")
-    parser.add_argument("-ps","--plateSeperation",action="store",dest="sep",help="seperation of capacitor in angstrom")
-    
-    
+    parser.add_argument("-p","--plates=",action="store",dest="plates",help="true/false for plates",choices=('true','false'),default='true')
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(2)
@@ -351,42 +339,30 @@ def main(argv):
     if (not args.elementType):
         parser.print_help()
         parser.error("No elementType specified")
-    
+
+    if (args.plates=='true'):
+            if ((not args.plateFile) and ((not args.Nx) and (not args.Ny))):
+                parser.print_help()
+                parser.error("Plate information missing\n check for Plate file, Nx or Ny")
+
+            
     (rotMat, minVec) = find_perpendiculars(args.hkl)
-    coords, Hmat = make_lattice(args.lattice, args.latticeConstant, rotMat, minVec, args.repeats,args.vacuum)
+    coords, Hmat = make_lattice(args.lattice, args.latticeConstant, rotMat,
+                                minVec, args.repeats, args.vacuum)
+    if(args.plates=='true'):
+        pCoordX,pCoordY,z1,z2=plate_coordinates(Hmat,args.Nx,args.Ny)
+    	write_plate_file(args.Nx,args.Ny,pCoordX,pCoordY,z1,z2,args.plateFile)
+        
+        if (args.omdFileName):
+            write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plateFile)
+    else:
+        if (args.omdFileName):
+            write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plates)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    if(args.plates=="true"):
-        if(not args.Nx):
-            parser.print_help()
-            parser.error("No number of grid points in capacitor along x-axis given")
-
-        if(not args.Ny):
-            parser.print_help()
-            parser.error("No number of grid points in capacitor along y-axis given")
-    
-
-        if(not args.sep):
-            parser.pring_help()
-            parser.error("No plate sepration given")
-         
-        if (args.plateFile):
-            pCoordX,pCoordY,z1,z2=plate_coordinates(Hmat,args.Nx,args.Ny,float(args.sep))
-            write_plate_file(args.Nx,args.Ny,pCoordX,pCoordY,z1,z2,args.plateFile)
-
-
-
+            
     if (args.xyzFileName):
         write_xyz_file(args.xyzFileName, coords, args.elementType)
-    if (args.omdFileName):
-        write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plateFile,args.plates)
+ 
 
 if __name__ == "__main__":
     #if len(sys.argv) == 1:

@@ -250,7 +250,6 @@ def LayerDipole(dumpFile,frames,atomNumber,atomPlate,UsedFrame,K,E,plotBool):
 k=[200,250,300,350,400,450,500,550]
 E=[0.5,1,1.5,2]
 frameUsed=99
-atomNumber=3600
 atomPlate=0
 frames=100
 pathFolder="../Susceptiblity_K_determine/"

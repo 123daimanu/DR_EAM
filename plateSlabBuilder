@@ -225,7 +225,7 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
       
       
       cutoffMethod = "shifted_force";
-      cutoffRadius = 13.5;
+      cutoffRadius = 8;
       electrostaticScreeningMethod = "DAMPED";
       statFileFormat = "TIME|TOTAL_ENERGY|POTENTIAL_ENERGY|KINETIC_ENERGY|TEMPERATURE|PRESSURE|VOLUME|CONSERVED_QUANTITY|SYSTEM_DIPOLE";
       dampingAlpha = 0.14;
@@ -233,7 +233,7 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
       targetTemp = 100;
       tauThermostat = 1000;
       tauBarostat = 1e6;
-      
+      uniformField = (0,0,0); 
       tempSet = "false";
       useInitialTime = "false";
       useInitialExtendedSystemState = "false";

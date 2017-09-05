@@ -169,7 +169,7 @@ def plate_coordinates(Hmat,Nx,Ny):
                 
         return pCoordX,pCoordY,z1,z2
     
-def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
+def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile,charge):
     outputFile = open(outputFileName, 'w')
     outputFile.write("<OpenMD version=2>\n")
     outputFile.write("  <MetaData> \n\n")
@@ -260,7 +260,7 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
     outputFile.write("   <SiteData>\n")
     for i in range(len(coords)):
         outputFile.write("\t" + str(i) + "\t%f\t%s\t%f\t%f\t%f\t%f\t%f\n" %
-                        (0, "cwe", 0, 0,
+                        (0, "cwe", float(charge), 0,
                         0, 0, 0))
     outputFile.write("    </SiteData>")
     outputFile.write("  </Snapshot>\n")
@@ -293,7 +293,7 @@ def main(argv):
     parser = argparse.ArgumentParser(
         description='OpenMD cubic lattice slab builder\nBuilds a slab of a cubic material (SC, FCC, or BCC) with a particular cut (hkl) facing the z-axis of the box.',
         formatter_class=RawDescriptionHelpFormatter,
-        epilog="Example: plateCubeBuilder -l fcc -c 4.08 -f 5 5 7 -r 10 10 8 -e Au -v true -nx 100 -ny 100 -po plates.omd  -o 557Slab.omd -x 557Slab.xyz")
+        epilog="Example: plateCubeBuilder -l fcc -c 4.08 -f 5 5 7 -r 10 10 8 -e Au -ch 0.4 -v true -nx 100 -ny 100 -po plates.omd  -o 557Slab.omd -x 557Slab.xyz")
     parser.add_argument("-l","--lattice=", action="store",
                         choices=('sc','fcc','bcc'), dest="lattice", help="One of: sc, fcc, or bcc")
     parser.add_argument("-c","--latticeConstant=", action="store", type=float,
@@ -311,7 +311,8 @@ def main(argv):
     parser.add_argument("-nx","--Nx",action="store",dest="Nx",help="number of points in x")
     parser.add_argument("-ny","--Ny",action="store",dest="Ny",help="number of points in y")
     parser.add_argument("-po","--plate-file",action="store",dest="plateFile",help="name of .omd file conting the plates")
-    parser.add_argument("-p","--plates=",action="store",dest="plates",help="true/false for plates",choices=('true','false'),default='true')
+    parser.add_argument("-p","--plates=",action="store",dest="plates",help="true/false for plates",choices=('true','false'),default='false')
+    parser.add_argument("-ch","--charge=",action="store",dest="charge",help="charge in the crystal",default=0.0,type=float)
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(2)
@@ -354,10 +355,10 @@ def main(argv):
     	write_plate_file(args.Nx,args.Ny,pCoordX,pCoordY,z1,z2,args.plateFile)
         
         if (args.omdFileName):
-            write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plateFile)
+            write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plateFile,args.charge)
     else:
         if (args.omdFileName):
-            write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plates)
+            write_omd_file(args.omdFileName, coords, args.elementType, Hmat,args.plates,args.charge)
     
             
     if (args.xyzFileName):

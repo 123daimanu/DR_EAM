@@ -14,7 +14,7 @@ lines=xyzFile.readlines()
 linesAppend=[]
 for line in lines:
 	lineApp=str.split(line);
-	if(lineApp[0]=="Na+"):
+	if(lineApp[0]=="O_FQ"):
 		lineApp[4]="0";  # edits the charge of Sodium to 0
 	last="\n"
 	lineApp.append(last)

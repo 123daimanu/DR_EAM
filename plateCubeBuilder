@@ -133,7 +133,7 @@ def make_lattice(lattice, latticeConstant, rotMat, minVec, repeats, vacuum):
     if (vacuum.lower() == "true"):
         # Multiplying the z-dimenion by 3 so the resulting box
         # contains 2/3 vacuum and 1/3 solid
-        Hmat = [[boxCorner[0],0,0], [0,boxCorner[1],0], [0,0,boxCorner[2]*5.0]]
+        Hmat = [[boxCorner[0]*20.0,0,0], [0,boxCorner[1]*20.0,0], [0,0,boxCorner[2]*20.0]]
     else:
         Hmat = [[boxCorner[0],0,0], [0,boxCorner[1],0], [0,0,boxCorner[2]]]
 
@@ -152,11 +152,11 @@ def write_xyz_file(outputFileName, coords, elementType):
     print "Generated XYZ file: " + outputFileName
 
 def plate_coordinates(Hmat,Nx,Ny):
-        x_int=-abs(Hmat[0][0])/float(2)
-        y_int=-abs(Hmat[1][1])/float(2)
-        z_int=-abs(Hmat[2][2])/float(2*5)
-        z1=z_int-10
-        z2=abs(Hmat[2][2]/float(2*5))+10
+        x_int=-abs(Hmat[0][0])/float(2*20)
+        y_int=-abs(Hmat[1][1])/float(2*20)
+        z_int=-abs(Hmat[2][2])/float(2*20)
+        z1=z_int-30
+        z2=abs(Hmat[2][2]/float(2*20))+30
         spacingX=(Hmat[0][0]/float(Nx))
         spacingY=(Hmat[1][1]/float(Ny))
         pCoordX=np.zeros(int(Nx))
@@ -166,7 +166,7 @@ def plate_coordinates(Hmat,Nx,Ny):
             pCoordX[xcount]=xcount*spacingX+x_int
         for ycount in range(int(Ny)):
             pCoordY[ycount]=ycount*spacingY+y_int
-         
+                
         return pCoordX,pCoordY,z1,z2
     
 def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
@@ -190,8 +190,8 @@ def write_omd_file(outputFileName, coords, elementType, Hmat,plateFile):
 
 
     outputFile.write("component{\n")
-    outputFile.write("  type =\"Plates\";\n")
-    outputFile.write("  nMol = 1; \n")
+    outputFile.write("  type = Plates\";\n")
+    outputFile.write("  nMol = 1 \n")
     outputFile.write("}\n\n")
 
     
@@ -280,7 +280,7 @@ def write_plate_file(Nx,Ny,pCoordX,pCoordY,z1,z2,name):
 			pos=pos+1
 	pFile.write("rigidBody[0] {\n")
 	pFile.write("members(0")
-	for mem in range(1,2*(int(Nx)*int(Ny))):
+	for mem in range(1,int(Nx)*int(Ny)):
 		pFile.write(",%d"%mem)
 	pFile.write(");\n")
 	pFile.write("}\n")
@@ -340,10 +340,10 @@ def main(argv):
     (rotMat, minVec) = find_perpendiculars(args.hkl)
     coords, Hmat = make_lattice(args.lattice, args.latticeConstant, rotMat,
                                 minVec, args.repeats, args.vacuum)
+    pCoordX,pCoordY,z1,z2=plate_coordinates(Hmat,args.Nx,args.Ny)
     
     if (args.plateFile):
-        pCoordX,pCoordY,z1,z2=plate_coordinates(Hmat,args.Nx,args.Ny)
-        write_plate_file(args.Nx,args.Ny,pCoordX,pCoordY,z1,z2,args.plateFile)
+	write_plate_file(args.Nx,args.Ny,pCoordX,pCoordY,z1,z2,args.plateFile)
 
     if (args.xyzFileName):
         write_xyz_file(args.xyzFileName, coords, args.elementType)

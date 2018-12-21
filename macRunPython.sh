@@ -1,4 +1,5 @@
-jupyter notebook --no-browser --port=8900
+jupyter notebook --no-browser --port=$1
+
 
 
 

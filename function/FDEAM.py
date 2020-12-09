@@ -3,14 +3,14 @@
 
 
 import numpy as num
-import matplotlib.pyplot as plt
-import pylab as lab
-from scipy import constants
+#import matplotlib.pyplot as plt
+#import pylab as lab
+#from scipy import constants
 import scipy as sci
-import pandas as pan
+#import pandas as pan
 import os
-from collections import OrderedDict
-from scipy.optimize import curve_fit
+#from collections import OrderedDict
+#from scipy.optimize import curve_fit
 import sys
 import re
 
@@ -835,7 +835,8 @@ def ReportExtractor(reportFile,lineNo):
     file1=open(reportFile)
     lines1=file1.readlines()
     outLine=lines1[lineNo]
-    match_number = re.compile('-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?')
+    #match_number = re.compile('-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *[-+]?\ *[0-9]+)?')
+    match_number = re.compile('-?[0-9]+\.?[0-9]*(?:[Ee][-+]?[0-9]+)?')
     outData = [float(x) for x in re.findall(match_number, outLine)]
     return outData
 

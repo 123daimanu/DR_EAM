@@ -5,7 +5,7 @@ This package contains modules that can be used to analyze result of openmd simul
 
 # Add imports here
 from .main import *
-
+from .extractor import * 
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()

@@ -2,7 +2,8 @@ import numpy as np
 import sys
 import re
 
-
+def Welcome():
+    print("Welcome")
 
 def DumpExtractor(filename, frames, atomNumber, atomPlate):
 
